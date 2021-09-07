@@ -5,6 +5,11 @@ const axios = require('axios');
 const multer = require('multer');
 const mimeTypes = require('mime-types')
 const fs = require ('fs')
+const fetch = require('fetch')
+const querystring = require('querystring');
+const url = require('url');
+const qs = require('qs');
+const FormData = require('form-data');
 
 const storage = multer.diskStorage({
     destination: 'ups/',
@@ -13,8 +18,10 @@ const storage = multer.diskStorage({
         cb("","img.jpg")
     }
 })
+var formData = []
 
-const formData = require('form-data')
+
+var data64 = '';
 
 const upload = multer({
    storage: storage})
@@ -22,55 +29,44 @@ const upload = multer({
 const app = express();
 
 app.use("/static", express.static("static"));
-/*
-let data = formData();
-data.append('file', file, file.fileName);*/
 
-/*fs.readFile('./ups/imgLoad.jpeg', function(err, data) {
-    if (err) throw err; // Fail if the file can't be read.
+
+
+
+function sendFinally(){
+    try {  
+        
     
-    console.log('Se leyo la imagen/');
-  });
-
-
-  function getBase64FomFile(img){
-    let fileReader = new FileReader();
-    var out = fileReader.readAsDataURL(img);
-    console.log(out)
+       const form = new FormData();
+       form.append('my_field', 'my value');
+       //form.append('my_file', fs.createReadStream('./img/bar.jpg'));
+       axios.post('http://localhost:4001/image/', form, { headers: form.getHeaders() })
+       
+        
+    } catch (error) {
+      console.error(error);
+    }
   }
 
 
-  getBase64FromFile(file, function(base64){
-    console.log(base64)
-  });
-*/
-
-function convertImageto64(){
+function convertImageto64(callback){
     exec('sh convertImage64.sh');
-    console.log("se ha ejecutado el script")
+    setTimeout(() => {
+        callback()
+    }, 5000);
 }
 
 
 
-function readIageInCode(){
-    var base64 = '';
-
-    fs.readFile('.ups/imgIncode.txt', 'utf8', (error, datos) => {
+function readImageInCode(callback){
+    fs.readFile('./ups/imgIncode.txt', 'utf8', (error, data) => {
         if (error) throw error;
-        base64= datos;
+        data64 = data        
+        setTimeout(() => {
+            callback()
+        }, 5000);                
     });
 }
-
-
-
-
-
-
-
-
-
-
-
 
 app.get("/", function (req, res) {
     res.sendFile(__dirname + "/index.html");
@@ -93,15 +89,17 @@ app.use(cors(
     config.application.cors.server
 ));
 
-
+sendFinally()
 
 app.post('/sendImage/', upload.single('avatar') ,(req, res)=>{
-    res.send('chimba')
-    console.log('disque llego')
-    convertImageto64()
+    
+    
+
+        
+    
+    //readImageInCode()
     //restartServer(req.params.serverid);
   })
-
 app.listen(4000, () => {
     console.log('Client running on http://localhost:4000')
 });
